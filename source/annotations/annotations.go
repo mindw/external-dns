@@ -70,6 +70,8 @@ var (
 	ControllerValue = "dns-controller"
 	// InternalHostnameKey The annotation used for defining the desired hostname
 	InternalHostnameKey = AnnotationKeyPrefix + "internal-hostname"
+	// NodePortFilterKey The annotation used for limiting which nodes a NodePort service's records point at, as a label selector
+	NodePortFilterKey = AnnotationKeyPrefix + "nodeport-filter"
 	// The annotation used for defining the desired hostname source for gateways
 	GatewayHostnameSourceKey = AnnotationKeyPrefix + "gateway-hostname-source"
 )
@@ -103,6 +105,7 @@ func SetAnnotationPrefix(prefix string) {
 	Ingress = AnnotationKeyPrefix + "ingress"
 	IngressHostnameSourceKey = AnnotationKeyPrefix + "ingress-hostname-source"
 	InternalHostnameKey = AnnotationKeyPrefix + "internal-hostname"
+	NodePortFilterKey = AnnotationKeyPrefix + "nodeport-filter"
 	GatewayHostnameSourceKey = AnnotationKeyPrefix + "gateway-hostname-source"
 }
 
