@@ -99,6 +99,7 @@ type Config struct {
 	TraefikEnableLegacy            bool
 	TraefikDisableNew              bool
 	ExcludeUnschedulable           bool
+	NodePortExcludeLabel           string
 	ExposeInternalIPv6             bool
 	ExcludeTargetNets              []string
 	TargetNetFilter                []string
@@ -196,6 +197,7 @@ func NewSourceConfig(cfg *externaldns.Config, opts ...OverrideConfigOption) (*Co
 		TraefikEnableLegacy:            cfg.TraefikEnableLegacy,
 		TraefikDisableNew:              cfg.TraefikDisableNew,
 		ExcludeUnschedulable:           cfg.ExcludeUnschedulable,
+		NodePortExcludeLabel:           cfg.NodePortExcludeLabel,
 		ExposeInternalIPv6:             cfg.ExposeInternalIPV6,
 		ExcludeTargetNets:              cfg.ExcludeTargetNets,
 		TargetNetFilter:                cfg.TargetNetFilter,

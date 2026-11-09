@@ -93,9 +93,11 @@ Otherwise iterates over all Nodes, of any phase.
 
 Either way, some Nodes are skipped. With `Local`, they are skipped before the tiers above are compared.
 
-- Nodes labeled `node.kubernetes.io/exclude-from-external-load-balancers`, unless the value parses as false
-  (for example `false` or `0`). This is the label the cloud-provider service controller uses to keep Nodes out of
-  load balancers.
+- Nodes with the label set by `--nodeport-exclude-label`, unless the value parses as false (for example `false` or
+  `0`). It defaults to `node.kubernetes.io/exclude-from-external-load-balancers`, the label the cloud-provider service
+  controller uses to keep Nodes out of load balancers. Set it to another label, such as `karpenter.sh/nodepool`, to
+  exclude by that label instead, or turn the check off with `--nodeport-exclude-label=` (an empty
+  `EXTERNAL_DNS_NODEPORT_EXCLUDE_LABEL` keeps the default).
 - By default, Nodes that are cordoned, being deleted, or tainted `ToBeDeletedByClusterAutoscaler` (Cluster Autoscaler)
   or `karpenter.sh/disrupted` (Karpenter). Use `--no-exclude-unschedulable` to keep them.
 

@@ -2623,6 +2623,7 @@ func TestServiceSourceNodePortServices(t *testing.T) {
 					IgnoreHostnameAnnotation: tc.ignoreHostnameAnnotation,
 					ExposeInternalIPv6:       tc.exposeInternalIPv6,
 					ExcludeUnschedulable:     tc.ignoreUnscheduledNodes,
+					NodePortExcludeLabel:     v1.LabelNodeExcludeBalancers,
 					LabelFilter:              labels.Everything(),
 				},
 			)
@@ -5919,7 +5920,7 @@ func TestNodesExternalTrafficPolicyTypeLocal(t *testing.T) {
 		for _, p := range pods {
 			require.NoError(t, podInformer.Informer().GetStore().Add(p))
 		}
-		return &serviceSource{podInformers: informers.Single[coreinformers.PodInformer](podInformer), nodeInformer: nodeInformer}
+		return &serviceSource{podInformers: informers.Single[coreinformers.PodInformer](podInformer), nodeInformer: nodeInformer, nodePortExcludeLabel: v1.LabelNodeExcludeBalancers}
 	}
 
 	svc := &v1.Service{

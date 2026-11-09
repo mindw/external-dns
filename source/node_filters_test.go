@@ -85,7 +85,7 @@ func TestUnschedulableReason(t *testing.T) {
 	}
 }
 
-func TestIsExcludedFromLoadBalancers(t *testing.T) {
+func TestIsExcludedByLabel(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		labels map[string]string
@@ -103,7 +103,30 @@ func TestIsExcludedFromLoadBalancers(t *testing.T) {
 		{name: "unparsable value", labels: map[string]string{v1.LabelNodeExcludeBalancers: "yes"}, want: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.want, isExcludedFromLoadBalancers(&v1.Node{Name: "node1", Labels: tc.labels}))
+			assert.Equal(t, tc.want, isExcludedByLabel(&v1.Node{Name: "node1", Labels: tc.labels}, v1.LabelNodeExcludeBalancers))
+		})
+	}
+}
+
+// TestIsExcludedByLabelKey covers the fork-only --nodeport-exclude-label: the key decides which label
+// is read, an empty key turns the check off, and values follow the same rule as the standard label.
+func TestIsExcludedByLabelKey(t *testing.T) {
+	const customKey = "external-dns.kubernetes.io/exclude"
+	for _, tc := range []struct {
+		name   string
+		key    string
+		labels map[string]string
+		want   bool
+	}{
+		{name: "empty key ignores the standard label", key: "", labels: map[string]string{v1.LabelNodeExcludeBalancers: "true"}, want: false},
+		{name: "custom key true", key: customKey, labels: map[string]string{customKey: "true"}, want: true},
+		{name: "custom key false", key: customKey, labels: map[string]string{customKey: "false"}, want: false},
+		{name: "custom key ignores the standard label", key: customKey, labels: map[string]string{v1.LabelNodeExcludeBalancers: "true"}, want: false},
+		// Pool names aren't booleans, so every Node of any Karpenter NodePool is excluded.
+		{name: "karpenter nodepool name", key: "karpenter.sh/nodepool", labels: map[string]string{"karpenter.sh/nodepool": "default"}, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, isExcludedByLabel(&v1.Node{Name: "node1", Labels: tc.labels}, tc.key))
 		})
 	}
 }

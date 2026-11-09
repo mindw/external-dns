@@ -86,6 +86,8 @@ type serviceSource struct {
 	serviceTypeFilter    *serviceTypes
 	exposeInternalIPv6   bool
 	excludeUnschedulable bool
+	// nodePortExcludeLabel is the label key that keeps Nodes out of NodePort targets; "" turns the check off.
+	nodePortExcludeLabel string
 
 	// process Services with legacy annotations
 	compatibility string
@@ -204,6 +206,7 @@ func NewServiceSource(
 		listenEndpointEvents:           config.ListenEndpointEvents,
 		exposeInternalIPv6:             config.ExposeInternalIPv6,
 		excludeUnschedulable:           config.ExcludeUnschedulable,
+		nodePortExcludeLabel:           config.NodePortExcludeLabel,
 	}, nil
 }
 
@@ -779,7 +782,8 @@ func (sc *serviceSource) extractNodePortTargets(svc *v1.Service) (endpoint.Targe
 
 // isNodeTargetable reports whether the Node can be a target of NodePort records.
 // With --exclude-unschedulable, Nodes that are cordoned or being removed are skipped.
-// Nodes labeled node.kubernetes.io/exclude-from-external-load-balancers are always skipped.
+// Nodes with the --nodeport-exclude-label label (default node.kubernetes.io/exclude-from-external-load-balancers)
+// are skipped unless the flag is empty.
 func (sc *serviceSource) isNodeTargetable(node *v1.Node) bool {
 	if sc.excludeUnschedulable {
 		if reason := unschedulableReason(node); reason != "" {
@@ -787,8 +791,8 @@ func (sc *serviceSource) isNodeTargetable(node *v1.Node) bool {
 			return false
 		}
 	}
-	if isExcludedFromLoadBalancers(node) {
-		log.Debugf("Skipping node %s - labeled %s", node.Name, v1.LabelNodeExcludeBalancers)
+	if isExcludedByLabel(node, sc.nodePortExcludeLabel) {
+		log.Debugf("Skipping node %s - labeled %s", node.Name, sc.nodePortExcludeLabel)
 		return false
 	}
 	return true

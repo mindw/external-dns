@@ -24,6 +24,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"sigs.k8s.io/external-dns/pkg/apis/externaldns"
 	"sigs.k8s.io/external-dns/source/annotations"
@@ -56,6 +57,10 @@ func ValidateConfig(cfg *externaldns.Config) error {
 
 	if _, err := metav1.ParseToLabelSelector(cfg.AnnotationFilter); err != nil {
 		return errors.New("--annotation-filter does not specify a valid label selector")
+	}
+
+	if cfg.NodePortExcludeLabel != "" && len(k8svalidation.IsQualifiedName(cfg.NodePortExcludeLabel)) > 0 {
+		return errors.New("--nodeport-exclude-label is not a valid label key")
 	}
 
 	if cfg.AnnotationPrefix == "" {

@@ -230,6 +230,7 @@ type Config struct {
 	TraefikDisableNew                             bool
 	NAT64Networks                                 []string
 	ExcludeUnschedulable                          bool
+	NodePortExcludeLabel                          string
 	EmitEvents                                    []string
 	ForceDefaultTargets                           bool
 	UnstructuredResources                         []string
@@ -288,6 +289,7 @@ var defaultConfig = &Config{
 	ExcludeTargetNets:                []string{},
 	EmitEvents:                       []string{},
 	ExcludeUnschedulable:             true,
+	NodePortExcludeLabel:             "node.kubernetes.io/exclude-from-external-load-balancers",
 	ExoscaleAPIEnvironment:           "api",
 	ExoscaleAPIKey:                   "",
 	ExoscaleAPISecret:                "",
@@ -568,6 +570,7 @@ func bindFlags(b flags.FlagBinder, cfg *Config) {
 	b.StringsVar("exclude-record-types", "Record types to exclude from management; specify multiple times to exclude many; (optional)", nil, &cfg.ExcludeDNSRecordTypes)
 	b.StringsVar("exclude-target-net", "Exclude target nets. Only applies to A/AAAA records. (optional)", nil, &cfg.ExcludeTargetNets)
 	b.BoolVar("exclude-unschedulable", "Exclude nodes that are unschedulable or being removed: cordoned, being deleted, or tainted ToBeDeletedByClusterAutoscaler or karpenter.sh/disrupted (default: true)", defaultConfig.ExcludeUnschedulable, &cfg.ExcludeUnschedulable)
+	b.StringVar("nodeport-exclude-label", "Exclude Nodes with this label from NodePort targets, unless its value parses as false; --nodeport-exclude-label= disables this (default: node.kubernetes.io/exclude-from-external-load-balancers)", defaultConfig.NodePortExcludeLabel, &cfg.NodePortExcludeLabel)
 	b.BoolVar("expose-internal-ipv6", "When using the node source, expose internal IPv6 addresses (optional, default: false)", false, &cfg.ExposeInternalIPV6)
 	b.StringVar("gateway-label-filter", "Filter Gateways of Route endpoints via label selector (default: all gateways)", defaultConfig.GatewayLabelFilter, &cfg.GatewayLabelFilter)
 	b.StringVar("gateway-name", "Limit Gateways of Route endpoints to a specific name (default: all names)", defaultConfig.GatewayName, &cfg.GatewayName)

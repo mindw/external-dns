@@ -49,11 +49,16 @@ func unschedulableReason(node *v1.Node) string {
 	return ""
 }
 
-// isExcludedFromLoadBalancers reports whether the Node is labeled to be kept out of load balancers
-// that use Nodes as a second hop, with the same rules as the cloud-provider service controller:
-// any value other than one that parses as false excludes the Node.
-func isExcludedFromLoadBalancers(node *v1.Node) bool {
-	value, ok := node.Labels[v1.LabelNodeExcludeBalancers]
+// isExcludedByLabel reports whether the Node has the label key set to keep it out of NodePort targets.
+// The key comes from --nodeport-exclude-label (default node.kubernetes.io/exclude-from-external-load-balancers,
+// the label for load balancers that use Nodes as a second hop); an empty key never excludes.
+// Values follow the cloud-provider service controller: any value other than one that parses as false
+// excludes the Node.
+func isExcludedByLabel(node *v1.Node, key string) bool {
+	if key == "" {
+		return false
+	}
+	value, ok := node.Labels[key]
 	if !ok {
 		return false
 	}

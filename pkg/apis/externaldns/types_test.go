@@ -132,6 +132,7 @@ var (
 		WebhookProviderIdleTimeout:                    30 * time.Second,
 		WebhookProviderMaxBodySize:                    32 << 20,
 		ExcludeUnschedulable:                          true,
+		NodePortExcludeLabel:                          "node.kubernetes.io/exclude-from-external-load-balancers",
 	}
 
 	overriddenConfig = &Config{
@@ -246,6 +247,7 @@ var (
 		WebhookProviderIdleTimeout:                    30 * time.Second,
 		WebhookProviderMaxBodySize:                    32 << 20,
 		ExcludeUnschedulable:                          false,
+		NodePortExcludeLabel:                          "karpenter.sh/nodepool",
 	}
 )
 
@@ -294,6 +296,18 @@ func TestParseFlags(t *testing.T) {
 			expected: func(cfg *Config) {
 				assert.False(t, cfg.AWSEvaluateTargetHealth)
 				assert.False(t, cfg.ExcludeUnschedulable)
+			},
+		},
+		{
+			title: "empty nodeport-exclude-label disables the label check",
+			args: []string{
+				"--source=service",
+				"--provider=google",
+				"--nodeport-exclude-label=",
+			},
+			envVars: map[string]string{},
+			expected: func(cfg *Config) {
+				assert.Empty(t, cfg.NodePortExcludeLabel)
 			},
 		},
 		{
@@ -409,6 +423,7 @@ func TestParseFlags(t *testing.T) {
 				"--managed-record-types=CNAME",
 				"--managed-record-types=NS",
 				"--no-exclude-unschedulable",
+				"--nodeport-exclude-label=karpenter.sh/nodepool",
 				"--rfc2136-batch-change-size=100",
 				"--rfc2136-load-balancing-strategy=round-robin",
 				"--rfc2136-host=rfc2136-host1",
@@ -524,6 +539,7 @@ func TestParseFlags(t *testing.T) {
 				"EXTERNAL_DNS_NS1_IGNORESSL":                                     "1",
 				"EXTERNAL_DNS_MANAGED_RECORD_TYPES":                              "A\nAAAA\nCNAME\nNS",
 				"EXTERNAL_DNS_EXCLUDE_UNSCHEDULABLE":                             "false",
+				"EXTERNAL_DNS_NODEPORT_EXCLUDE_LABEL":                            "karpenter.sh/nodepool",
 				"EXTERNAL_DNS_RFC2136_BATCH_CHANGE_SIZE":                         "100",
 				"EXTERNAL_DNS_RFC2136_LOAD_BALANCING_STRATEGY":                   "round-robin",
 				"EXTERNAL_DNS_RFC2136_HOST":                                      "rfc2136-host1\nrfc2136-host2",
@@ -542,6 +558,16 @@ func TestParseFlags(t *testing.T) {
 			ti.expected(cfg)
 		})
 	}
+}
+
+// TestParseFlagsNodePortExcludeLabelEmptyEnv pins that kingpin treats an empty env var as unset, so
+// EXTERNAL_DNS_NODEPORT_EXCLUDE_LABEL="" keeps the default label; only --nodeport-exclude-label= disables it.
+func TestParseFlagsNodePortExcludeLabelEmptyEnv(t *testing.T) {
+	testutils.TestHelperEnvSetter(t, map[string]string{"EXTERNAL_DNS_NODEPORT_EXCLUDE_LABEL": ""})
+
+	cfg := NewConfig()
+	require.NoError(t, cfg.ParseFlags([]string{"--source=service", "--provider=google"}))
+	assert.Equal(t, "node.kubernetes.io/exclude-from-external-load-balancers", cfg.NodePortExcludeLabel)
 }
 
 func TestParseFlagsKingpinParseError(t *testing.T) {

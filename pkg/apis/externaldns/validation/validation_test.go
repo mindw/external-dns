@@ -85,6 +85,20 @@ func TestValidateFlags(t *testing.T) {
 	cfg.LabelFilter = "#invalid-selector"
 	require.Error(t, ValidateConfig(cfg))
 
+	for _, key := range []string{"", "karpenter.sh/nodepool", "node.kubernetes.io/exclude-from-external-load-balancers"} {
+		cfg = newValidConfig(t)
+		cfg.NodePortExcludeLabel = key
+		require.NoError(t, ValidateConfig(cfg), "--nodeport-exclude-label=%q", key)
+	}
+
+	cfg = newValidConfig(t)
+	cfg.NodePortExcludeLabel = "not a key!"
+	require.EqualError(t, ValidateConfig(cfg), "--nodeport-exclude-label is not a valid label key")
+
+	cfg = newValidConfig(t)
+	cfg.NodePortExcludeLabel = "-bad/"
+	require.Error(t, ValidateConfig(cfg))
+
 	cfg = newValidConfig(t)
 	cfg.AnnotationFilter = "kubernetes.io/gateway.class in (alb, nginx)"
 	require.NoError(t, ValidateConfig(cfg))
