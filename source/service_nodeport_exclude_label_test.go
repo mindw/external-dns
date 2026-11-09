@@ -30,6 +30,7 @@ import (
 
 	"sigs.k8s.io/external-dns/endpoint"
 	"sigs.k8s.io/external-dns/internal/testutils"
+	"sigs.k8s.io/external-dns/pkg/apis/externaldns"
 	"sigs.k8s.io/external-dns/source/annotations"
 	"sigs.k8s.io/external-dns/source/informers"
 	templatetest "sigs.k8s.io/external-dns/source/template/testutil"
@@ -37,6 +38,14 @@ import (
 
 // customExcludeLabel is an external-dns-specific label used to exclude Nodes instead of the standard one.
 const customExcludeLabel = "external-dns.kubernetes.io/exclude"
+
+// TestNewSourceConfigNodePortExcludeLabel checks that --nodeport-exclude-label reaches the source config.
+// Losing this mapping in a rebase would turn the exclusion off silently, since "" means disabled.
+func TestNewSourceConfigNodePortExcludeLabel(t *testing.T) {
+	got, err := NewSourceConfig(&externaldns.Config{NodePortExcludeLabel: "karpenter.sh/nodepool"})
+	require.NoError(t, err)
+	assert.Equal(t, "karpenter.sh/nodepool", got.NodePortExcludeLabel)
+}
 
 // TestServiceSourceNodePortExcludeLabel checks that --nodeport-exclude-label picks the label that keeps
 // Nodes out of NodePort targets, and that an empty value turns the label check off.
