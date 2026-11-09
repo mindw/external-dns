@@ -1,0 +1,41 @@
+# Fork-only: builds ghcr.io/mindw/external-dns from v*-nodeport-filter.* tags.
+# Not part of any upstream pull request.
+name: fork-release
+
+on:
+  push:
+    tags: ["v*-nodeport-filter.*"]
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Test the patched source package
+        run: go test -race ./source/...
+
+      - name: Install ko
+        run: make ko
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | ko login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Build and push linux/amd64 and linux/arm64
+        run: >-
+          make build.push/multiarch
+          IMAGE=ghcr.io/mindw/external-dns
+          VERSION="${{ github.ref_name }}"
+          GIT_REVISION="${{ github.sha }}"
+          IMG_PLATFORM=linux/amd64,linux/arm64
